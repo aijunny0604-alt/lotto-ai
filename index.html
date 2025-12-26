@@ -16,7 +16,7 @@
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-30px); } }
     @keyframes pulse { 0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); } }
     @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.4); } 50% { box-shadow: 0 0 60px rgba(0, 255, 136, 0.8), 0 0 100px rgba(0, 200, 255, 0.4); } }
-    @keyframes bounce-in { 0% { transform: scale(0) rotate(-180deg); opacity: 0; } 50% { transform: scale(1.2) rotate(10deg); } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+    @keyframes bounce-in { 0% { transform: scale(0) rotate(-180deg); opacity: 0; } 50% { transform: scale(1.2) rotate(10deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .container { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
     header { text-align: center; margin-bottom: 30px; }
@@ -31,15 +31,15 @@
     .card-title { font-weight: 700; font-size: 1rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; color: #00ff88; }
     .latest-draw { background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 200, 255, 0.1)); border: 1px solid rgba(0, 255, 136, 0.3); padding: 14px; border-radius: 16px; margin-bottom: 16px; text-align: center; }
     .latest-draw-title { color: #00ff88; font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; }
-    .latest-draw-balls { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
-    .tiny-ball { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 0.7rem; box-shadow: inset 0 -3px 8px rgba(0,0,0,0.3), inset 0 3px 8px rgba(255,255,255,0.2); }
+    .latest-draw-balls { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .tiny-ball { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 0.7rem; box-shadow: inset 0 -3px 8px rgba(0,0,0,0.3), inset 0 3px 8px rgba(255,255,255,0.2); flex-shrink: 0; }
     .tiny-ball.yellow { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; }
-    .tiny-ball.blue { background: linear-gradient(135deg, #38bdf8, #3b82f6); }
-    .tiny-ball.red { background: linear-gradient(135deg, #fb7185, #ef4444); }
-    .tiny-ball.gray { background: linear-gradient(135deg, #9ca3af, #4b5563); }
-    .tiny-ball.green { background: linear-gradient(135deg, #4ade80, #22c55e); }
-    .tiny-ball.bonus { background: linear-gradient(135deg, #64748b, #334155); border: 2px dashed #00ff88; }
-    .tiny-plus { color: #00ff88; margin: 0 3px; }
+    .tiny-ball.blue { background: linear-gradient(135deg, #38bdf8, #3b82f6); color: #fff; }
+    .tiny-ball.red { background: linear-gradient(135deg, #fb7185, #ef4444); color: #fff; }
+    .tiny-ball.gray { background: linear-gradient(135deg, #9ca3af, #4b5563); color: #fff; }
+    .tiny-ball.green { background: linear-gradient(135deg, #4ade80, #22c55e); color: #fff; }
+    .tiny-ball.bonus { background: linear-gradient(135deg, #64748b, #334155); border: 2px dashed #00ff88; color: #fff; }
+    .tiny-plus { color: #00ff88; margin: 0 3px; font-weight: bold; }
     
     /* 전략 선택 */
     .strategy-section { margin-bottom: 20px; }
@@ -86,17 +86,52 @@
     .result-strategy { display: inline-block; padding: 6px 14px; background: rgba(0, 255, 136, 0.2); border-radius: 20px; font-size: 0.75rem; color: #00ff88; margin-bottom: 10px; }
     .result-title { color: #00ff88; font-weight: 700; margin-bottom: 6px; font-family: 'Orbitron', sans-serif; }
     .result-subtitle { color: #7dd3fc; font-size: 0.8rem; margin-bottom: 20px; }
-    .balls-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-bottom: 12px; }
-    .ball { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 1.3rem; box-shadow: inset 0 -6px 15px rgba(0,0,0,0.3), inset 0 6px 15px rgba(255,255,255,0.2), 0 6px 20px rgba(0,0,0,0.4); opacity: 0; transform: scale(0); }
-    .ball.show { animation: bounce-in 0.5s ease-out forwards; }
+    
+    /* 볼 컨테이너 - 핵심 수정 */
+    .balls-container { 
+      display: flex; 
+      flex-wrap: wrap; 
+      justify-content: center; 
+      align-items: center; 
+      gap: 8px; 
+      margin-bottom: 12px; 
+      min-height: 70px;
+    }
+    
+    /* 볼 스타일 - 핵심 수정 */
+    .ball { 
+      width: 50px; 
+      height: 50px; 
+      border-radius: 50%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-family: 'Orbitron', sans-serif; 
+      font-weight: 800; 
+      font-size: 1.2rem; 
+      box-shadow: inset 0 -6px 15px rgba(0,0,0,0.3), inset 0 6px 15px rgba(255,255,255,0.2), 0 6px 20px rgba(0,0,0,0.4); 
+      flex-shrink: 0;
+      animation: bounce-in 0.5s ease-out forwards;
+    }
+    .ball.delay-1 { animation-delay: 0.1s; }
+    .ball.delay-2 { animation-delay: 0.2s; }
+    .ball.delay-3 { animation-delay: 0.3s; }
+    .ball.delay-4 { animation-delay: 0.4s; }
+    .ball.delay-5 { animation-delay: 0.5s; }
+    .ball.delay-6 { animation-delay: 0.6s; }
+    
     .ball.yellow { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; }
-    .ball.blue { background: linear-gradient(135deg, #38bdf8, #3b82f6); }
-    .ball.red { background: linear-gradient(135deg, #fb7185, #ef4444); }
-    .ball.gray { background: linear-gradient(135deg, #9ca3af, #4b5563); }
-    .ball.green { background: linear-gradient(135deg, #4ade80, #22c55e); }
-    .ball.bonus { background: linear-gradient(135deg, #64748b, #334155); border: 3px dashed #00ff88; }
-    .plus-sign { font-size: 1.5rem; color: #00ff88; margin: 0 6px; }
-    @media (min-width: 640px) { .ball { width: 65px; height: 65px; font-size: 1.5rem; } }
+    .ball.blue { background: linear-gradient(135deg, #38bdf8, #3b82f6); color: #fff; }
+    .ball.red { background: linear-gradient(135deg, #fb7185, #ef4444); color: #fff; }
+    .ball.gray { background: linear-gradient(135deg, #9ca3af, #4b5563); color: #fff; }
+    .ball.green { background: linear-gradient(135deg, #4ade80, #22c55e); color: #fff; }
+    .ball.bonus { background: linear-gradient(135deg, #64748b, #334155); border: 3px dashed #00ff88; color: #fff; }
+    .plus-sign { font-size: 1.5rem; color: #00ff88; margin: 0 4px; font-weight: bold; flex-shrink: 0; }
+    
+    @media (min-width: 640px) { 
+      .ball { width: 60px; height: 60px; font-size: 1.4rem; } 
+      .balls-container { gap: 10px; }
+    }
     
     /* 분석 정보 */
     .analysis-info { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(0, 255, 136, 0.2); text-align: left; }
@@ -112,7 +147,7 @@
     .toggle-arrow.open { transform: rotate(180deg); }
     .stats-content { display: none; margin-top: 12px; }
     .stats-content.show { display: block; }
-    .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; }
     @media (max-width: 500px) { .stats-grid { grid-template-columns: repeat(5, 1fr); } }
     .stat-ball { aspect-ratio: 1; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; position: relative; cursor: pointer; transition: transform 0.2s; }
     .stat-ball:hover { transform: scale(1.15); }
@@ -125,7 +160,7 @@
     .history-card.hidden { display: none; }
     .history-list { max-height: 200px; overflow-y: auto; }
     .history-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(0, 255, 136, 0.03); border-radius: 10px; margin-bottom: 6px; border: 1px solid rgba(0, 255, 136, 0.1); font-size: 0.75rem; }
-    .history-strategy { color: #a855f7; min-width: 60px; }
+    .history-strategy { color: #a855f7; min-width: 60px; font-size: 0.7rem; }
     .history-balls { display: flex; gap: 3px; align-items: center; flex-wrap: wrap; }
     
     /* 로그 */
@@ -693,7 +728,10 @@
         ball.textContent = n;
         container.appendChild(ball);
       });
-      container.innerHTML += `<span class="tiny-plus">+</span>`;
+      const plus = document.createElement('span');
+      plus.className = 'tiny-plus';
+      plus.textContent = '+';
+      container.appendChild(plus);
       const bonus = document.createElement('div');
       bonus.className = 'tiny-ball bonus';
       bonus.textContent = latest[2];
@@ -723,22 +761,25 @@
       const container = document.getElementById('ballsContainer');
       container.innerHTML = '';
       
+      // 6개 번호 표시
       result.numbers.forEach((n, i) => {
         const ball = document.createElement('div');
-        ball.className = `ball ${getBallColorClass(n)}`;
+        ball.className = `ball ${getBallColorClass(n)} delay-${i}`;
         ball.textContent = n;
-        ball.style.animationDelay = `${i * 0.1}s`;
-        setTimeout(() => ball.classList.add('show'), 10);
         container.appendChild(ball);
       });
       
-      container.innerHTML += `<span class="plus-sign">+</span>`;
-      const bonus = document.createElement('div');
-      bonus.className = 'ball bonus';
-      bonus.textContent = result.bonus;
-      bonus.style.animationDelay = '0.6s';
-      setTimeout(() => bonus.classList.add('show'), 10);
-      container.appendChild(bonus);
+      // + 기호
+      const plus = document.createElement('span');
+      plus.className = 'plus-sign';
+      plus.textContent = '+';
+      container.appendChild(plus);
+      
+      // 보너스 볼
+      const bonusBall = document.createElement('div');
+      bonusBall.className = `ball bonus delay-6`;
+      bonusBall.textContent = result.bonus;
+      container.appendChild(bonusBall);
       
       // 분석 정보
       const infoContainer = document.getElementById('analysisInfo');
