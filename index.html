@@ -18,6 +18,7 @@
     @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.4); } 50% { box-shadow: 0 0 60px rgba(0, 255, 136, 0.8), 0 0 100px rgba(0, 200, 255, 0.4); } }
     @keyframes bounce-in { 0% { transform: scale(0) rotate(-180deg); opacity: 0; } 50% { transform: scale(1.2) rotate(10deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     .container { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
     header { text-align: center; margin-bottom: 30px; }
     .badge { display: inline-block; padding: 8px 16px; background: linear-gradient(90deg, #00ff88, #00c8ff); border-radius: 50px; font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #000; margin: 4px; }
@@ -51,6 +52,9 @@
     .strategy-btn.ai-btn { border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.1); }
     .strategy-btn.ai-btn.active { border-color: #a855f7; background: rgba(168, 85, 247, 0.25); box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
     .strategy-btn.ai-btn:hover { border-color: rgba(168, 85, 247, 0.7); }
+    .strategy-btn.mega-btn { border-color: rgba(255, 215, 0, 0.5); background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 140, 0, 0.1)); }
+    .strategy-btn.mega-btn.active { border-color: #ffd700; background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 140, 0, 0.25)); box-shadow: 0 0 25px rgba(255, 215, 0, 0.5); }
+    .strategy-btn.mega-btn:hover { border-color: rgba(255, 215, 0, 0.8); }
     .strategy-icon { font-size: 1.5rem; margin-bottom: 6px; }
     .strategy-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; }
     .strategy-desc { font-size: 0.65rem; color: #94a3b8; line-height: 1.3; }
@@ -72,6 +76,44 @@
     .train-btn:hover { transform: scale(1.02); box-shadow: 0 5px 25px rgba(168, 85, 247, 0.4); }
     .train-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; transform: none; box-shadow: none; }
     
+    /* 🔥 시뮬레이션 섹션 */
+    .simulation-section { background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 140, 0, 0.1)); border: 2px solid rgba(255, 215, 0, 0.3); padding: 20px; border-radius: 16px; margin-bottom: 16px; }
+    .simulation-section.hidden { display: none; }
+    .sim-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .sim-icon { width: 45px; height: 45px; background: linear-gradient(135deg, #ffd700, #ff8c00); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+    .sim-title { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; color: #ffd700; }
+    .sim-sub { font-size: 0.75rem; color: #fbbf24; }
+    .sim-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .sim-count-btn { padding: 10px 20px; border: 2px solid rgba(255, 215, 0, 0.4); border-radius: 10px; background: rgba(255, 215, 0, 0.1); color: #ffd700; font-weight: 700; cursor: pointer; transition: all 0.3s; font-size: 0.9rem; }
+    .sim-count-btn:hover { background: rgba(255, 215, 0, 0.2); border-color: #ffd700; }
+    .sim-count-btn.active { background: rgba(255, 215, 0, 0.3); border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
+    .sim-custom { display: flex; align-items: center; gap: 8px; }
+    .sim-custom input { width: 80px; padding: 10px; border: 2px solid rgba(255, 215, 0, 0.4); border-radius: 10px; background: rgba(0,0,0,0.3); color: #ffd700; font-weight: 700; font-size: 0.9rem; text-align: center; }
+    .sim-custom input:focus { outline: none; border-color: #ffd700; }
+    .sim-custom span { color: #fbbf24; font-size: 0.85rem; }
+    .sim-run-btn { width: 100%; padding: 14px; font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; border: none; border-radius: 12px; background: linear-gradient(90deg, #ffd700, #ff8c00); color: #000; cursor: pointer; transition: all 0.3s; margin-top: 10px; }
+    .sim-run-btn:hover { transform: scale(1.02); box-shadow: 0 5px 30px rgba(255, 215, 0, 0.5); }
+    .sim-run-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; transform: none; }
+    .sim-progress { margin-top: 16px; }
+    .sim-progress.hidden { display: none; }
+    .sim-progress-text { font-size: 0.85rem; color: #fbbf24; margin-bottom: 8px; text-align: center; }
+    .sim-progress-bar { height: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; overflow: hidden; }
+    .sim-progress-fill { height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); border-radius: 5px; transition: width 0.1s; }
+    
+    /* 시뮬레이션 결과 */
+    .sim-result { margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 215, 0, 0.3); }
+    .sim-result.hidden { display: none; }
+    .sim-result-title { font-family: 'Orbitron', sans-serif; font-size: 1rem; color: #ffd700; margin-bottom: 12px; text-align: center; }
+    .sim-freq-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; margin-bottom: 20px; }
+    @media (max-width: 500px) { .sim-freq-grid { grid-template-columns: repeat(5, 1fr); } }
+    .freq-ball { aspect-ratio: 1; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; position: relative; transition: all 0.3s; }
+    .freq-ball .num { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; }
+    .freq-ball .cnt { font-size: 0.55rem; opacity: 0.9; }
+    .freq-ball.top6 { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); transform: scale(1.1); }
+    .final-result { background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 140, 0, 0.15)); border: 2px solid #ffd700; border-radius: 16px; padding: 20px; text-align: center; }
+    .final-label { font-size: 0.8rem; color: #fbbf24; margin-bottom: 8px; }
+    .final-title { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: #ffd700; margin-bottom: 16px; }
+    
     /* 생성 버튼 */
     .generate-section { text-align: center; margin: 24px 0; }
     .generate-btn { padding: 18px 50px; font-family: 'Orbitron', sans-serif; font-size: 1.1rem; font-weight: 700; border: none; border-radius: 18px; background: linear-gradient(90deg, #00ff88, #00c8ff, #a855f7); color: #000; cursor: pointer; transition: all 0.3s; animation: pulse-glow 2s ease-in-out infinite; }
@@ -86,52 +128,23 @@
     .result-strategy { display: inline-block; padding: 6px 14px; background: rgba(0, 255, 136, 0.2); border-radius: 20px; font-size: 0.75rem; color: #00ff88; margin-bottom: 10px; }
     .result-title { color: #00ff88; font-weight: 700; margin-bottom: 6px; font-family: 'Orbitron', sans-serif; }
     .result-subtitle { color: #7dd3fc; font-size: 0.8rem; margin-bottom: 20px; }
-    
-    /* 볼 컨테이너 - 핵심 수정 */
-    .balls-container { 
-      display: flex; 
-      flex-wrap: wrap; 
-      justify-content: center; 
-      align-items: center; 
-      gap: 8px; 
-      margin-bottom: 12px; 
-      min-height: 70px;
-    }
-    
-    /* 볼 스타일 - 핵심 수정 */
-    .ball { 
-      width: 50px; 
-      height: 50px; 
-      border-radius: 50%; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      font-family: 'Orbitron', sans-serif; 
-      font-weight: 800; 
-      font-size: 1.2rem; 
-      box-shadow: inset 0 -6px 15px rgba(0,0,0,0.3), inset 0 6px 15px rgba(255,255,255,0.2), 0 6px 20px rgba(0,0,0,0.4); 
-      flex-shrink: 0;
-      animation: bounce-in 0.5s ease-out forwards;
-    }
+    .balls-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin-bottom: 12px; min-height: 70px; }
+    .ball { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 1.2rem; box-shadow: inset 0 -6px 15px rgba(0,0,0,0.3), inset 0 6px 15px rgba(255,255,255,0.2), 0 6px 20px rgba(0,0,0,0.4); flex-shrink: 0; animation: bounce-in 0.5s ease-out forwards; }
     .ball.delay-1 { animation-delay: 0.1s; }
     .ball.delay-2 { animation-delay: 0.2s; }
     .ball.delay-3 { animation-delay: 0.3s; }
     .ball.delay-4 { animation-delay: 0.4s; }
     .ball.delay-5 { animation-delay: 0.5s; }
     .ball.delay-6 { animation-delay: 0.6s; }
-    
     .ball.yellow { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; }
     .ball.blue { background: linear-gradient(135deg, #38bdf8, #3b82f6); color: #fff; }
     .ball.red { background: linear-gradient(135deg, #fb7185, #ef4444); color: #fff; }
     .ball.gray { background: linear-gradient(135deg, #9ca3af, #4b5563); color: #fff; }
     .ball.green { background: linear-gradient(135deg, #4ade80, #22c55e); color: #fff; }
     .ball.bonus { background: linear-gradient(135deg, #64748b, #334155); border: 3px dashed #00ff88; color: #fff; }
+    .ball.gold { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; box-shadow: 0 0 25px rgba(255, 215, 0, 0.6), inset 0 -6px 15px rgba(0,0,0,0.3), inset 0 6px 15px rgba(255,255,255,0.4); }
     .plus-sign { font-size: 1.5rem; color: #00ff88; margin: 0 4px; font-weight: bold; flex-shrink: 0; }
-    
-    @media (min-width: 640px) { 
-      .ball { width: 60px; height: 60px; font-size: 1.4rem; } 
-      .balls-container { gap: 10px; }
-    }
+    @media (min-width: 640px) { .ball { width: 60px; height: 60px; font-size: 1.4rem; } .balls-container { gap: 10px; } }
     
     /* 분석 정보 */
     .analysis-info { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(0, 255, 136, 0.2); text-align: left; }
@@ -202,6 +215,11 @@
     <div class="card strategy-section">
       <h3 class="card-title">🎯 분석 전략 선택</h3>
       <div class="strategy-grid">
+        <button class="strategy-btn mega-btn" data-strategy="simulation">
+          <div class="strategy-icon">🏆</div>
+          <div class="strategy-name">AI 시뮬레이션</div>
+          <div class="strategy-desc">N번 분석 후 종합</div>
+        </button>
         <button class="strategy-btn ai-btn active" data-strategy="ai">
           <div class="strategy-icon">🧠</div>
           <div class="strategy-name">AI 신경망</div>
@@ -232,11 +250,6 @@
           <div class="strategy-name">연속패턴</div>
           <div class="strategy-desc">연속번호 포함</div>
         </button>
-        <button class="strategy-btn" data-strategy="lowHigh">
-          <div class="strategy-icon">📈</div>
-          <div class="strategy-name">고저밸런스</div>
-          <div class="strategy-desc">저번호/고번호 균형</div>
-        </button>
         <button class="strategy-btn" data-strategy="oddEven">
           <div class="strategy-icon">🎲</div>
           <div class="strategy-name">홀짝밸런스</div>
@@ -250,7 +263,49 @@
       </div>
     </div>
     
-    <!-- AI 상태 (AI 전략일 때만) -->
+    <!-- 🔥 시뮬레이션 섹션 -->
+    <div class="simulation-section hidden" id="simulationSection">
+      <div class="sim-header">
+        <div class="sim-icon">🏆</div>
+        <div>
+          <div class="sim-title">AI 시뮬레이션</div>
+          <div class="sim-sub">여러 번 분석 후 최다 출현 번호 추출</div>
+        </div>
+      </div>
+      
+      <p style="font-size: 0.8rem; color: #fbbf24; margin-bottom: 12px;">🎯 시뮬레이션 횟수를 선택하세요 (많을수록 정확도 ↑)</p>
+      
+      <div class="sim-controls">
+        <button class="sim-count-btn" data-count="10">10회</button>
+        <button class="sim-count-btn" data-count="30">30회</button>
+        <button class="sim-count-btn active" data-count="50">50회</button>
+        <button class="sim-count-btn" data-count="100">100회</button>
+        <div class="sim-custom">
+          <input type="number" id="customCount" placeholder="직접입력" min="5" max="500">
+          <span>회</span>
+        </div>
+      </div>
+      
+      <button class="sim-run-btn" id="simRunBtn">🚀 시뮬레이션 시작</button>
+      
+      <div class="sim-progress hidden" id="simProgress">
+        <div class="sim-progress-text" id="simProgressText">0 / 50 완료</div>
+        <div class="sim-progress-bar"><div class="sim-progress-fill" id="simProgressFill" style="width: 0%"></div></div>
+      </div>
+      
+      <div class="sim-result hidden" id="simResult">
+        <div class="sim-result-title">📊 번호별 출현 빈도</div>
+        <div class="sim-freq-grid" id="simFreqGrid"></div>
+        
+        <div class="final-result">
+          <div class="final-label">🏆 시뮬레이션 최종 추천 번호</div>
+          <div class="final-title" id="simFinalTitle">50회 분석 결과</div>
+          <div class="balls-container" id="simFinalBalls"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- AI 상태 -->
     <div class="ai-status" id="aiStatus">
       <div class="ai-header">
         <div class="ai-icon">🧠</div>
@@ -270,7 +325,7 @@
     </div>
     
     <!-- 생성 버튼 -->
-    <div class="generate-section">
+    <div class="generate-section" id="generateSection">
       <button class="generate-btn" id="generateBtn">🎰 번호 생성</button>
       <p class="gen-count">총 <span id="genCount">0</span>회 생성</p>
     </div>
@@ -325,6 +380,7 @@
     let currentStrategy = 'ai';
     let generationCount = 0;
     let history = [];
+    let simCount = 50;
     
     const ALL_NUMBERS = Array.from({ length: 45 }, (_, i) => i + 1);
     const WINDOW_SIZE = 10;
@@ -410,8 +466,7 @@
     }
     
     function getRecentFrequency() {
-      const recent = LOTTO_DATA.slice(-RECENT_DRAWS);
-      return getFrequency(recent);
+      return getFrequency(LOTTO_DATA.slice(-RECENT_DRAWS));
     }
     
     function getAllTimeFrequency() {
@@ -420,207 +475,238 @@
     
     function getHotNumbers(count = 15) {
       const freq = getRecentFrequency();
-      return Object.entries(freq)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, count)
-        .map(e => parseInt(e[0]));
+      return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, count).map(e => parseInt(e[0]));
     }
     
     function getColdNumbers(count = 15) {
       const freq = getRecentFrequency();
-      return Object.entries(freq)
-        .sort((a, b) => a[1] - b[1])
-        .slice(0, count)
-        .map(e => parseInt(e[0]));
+      return Object.entries(freq).sort((a, b) => a[1] - b[1]).slice(0, count).map(e => parseInt(e[0]));
     }
     
     // ============================================
-    // 🎯 전략별 번호 생성
+    // 🎯 전략별 번호 생성 (내부용)
+    // ============================================
+    function generateAINumbers() {
+      if (!isModelTrained) return null;
+      
+      const probWithIndex = aiPredictions.map((p, i) => ({ num: i + 1, prob: p }));
+      probWithIndex.sort((a, b) => b.prob - a.prob);
+      
+      const selected = [];
+      const candidates = probWithIndex.slice(0, 20);
+      
+      while (selected.length < 6) {
+        const num = weightedRandom(candidates.map(c => c.num), candidates.map(c => c.prob));
+        if (!selected.includes(num)) selected.push(num);
+      }
+      
+      return selected.sort((a, b) => a - b);
+    }
+    
+    function generateHotNumbers() {
+      const hot = getHotNumbers(20);
+      return shuffle(hot).slice(0, 6).sort((a, b) => a - b);
+    }
+    
+    function generateColdNumbers() {
+      const cold = getColdNumbers(20);
+      return shuffle(cold).slice(0, 6).sort((a, b) => a - b);
+    }
+    
+    function generateBalancedNumbers() {
+      const ranges = [[1,9], [10,18], [19,27], [28,36], [37,45]];
+      const selected = [];
+      ranges.forEach(([min, max]) => {
+        const nums = ALL_NUMBERS.filter(n => n >= min && n <= max);
+        selected.push(shuffle(nums)[0]);
+      });
+      const remaining = ALL_NUMBERS.filter(n => !selected.includes(n));
+      selected.push(shuffle(remaining)[0]);
+      return selected.sort((a, b) => a - b);
+    }
+    
+    function generateFrequencyNumbers() {
+      const freq = getAllTimeFrequency();
+      const top20 = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 20).map(e => parseInt(e[0]));
+      return shuffle(top20).slice(0, 6).sort((a, b) => a - b);
+    }
+    
+    function generateHybridNumbers() {
+      const hot = getHotNumbers(10);
+      const cold = getColdNumbers(10);
+      const freq = getAllTimeFrequency();
+      const topFreq = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 10).map(e => parseInt(e[0]));
+      
+      const selected = [];
+      selected.push(shuffle(hot)[0]);
+      selected.push(shuffle(cold)[0]);
+      selected.push(shuffle(topFreq.filter(n => !selected.includes(n)))[0]);
+      
+      while (selected.length < 6) {
+        const remaining = ALL_NUMBERS.filter(n => !selected.includes(n));
+        selected.push(shuffle(remaining)[0]);
+      }
+      return selected.sort((a, b) => a - b);
+    }
+    
+    // ============================================
+    // 🏆 시뮬레이션
+    // ============================================
+    async function runSimulation() {
+      if (!isModelTrained) {
+        alert('먼저 AI 모델을 학습시켜 주세요!');
+        return;
+      }
+      
+      const btn = document.getElementById('simRunBtn');
+      btn.disabled = true;
+      btn.textContent = '🔄 시뮬레이션 중...';
+      
+      document.getElementById('simProgress').classList.remove('hidden');
+      document.getElementById('simResult').classList.add('hidden');
+      
+      const frequency = {};
+      ALL_NUMBERS.forEach(n => frequency[n] = 0);
+      
+      const generators = [
+        generateAINumbers,
+        generateHotNumbers,
+        generateColdNumbers,
+        generateBalancedNumbers,
+        generateFrequencyNumbers,
+        generateHybridNumbers
+      ];
+      
+      for (let i = 0; i < simCount; i++) {
+        // 여러 전략 혼합 사용
+        const gen = generators[i % generators.length];
+        const numbers = gen();
+        
+        if (numbers) {
+          numbers.forEach(n => frequency[n]++);
+        }
+        
+        // 진행률 업데이트
+        const pct = ((i + 1) / simCount * 100).toFixed(0);
+        document.getElementById('simProgressText').textContent = `${i + 1} / ${simCount} 완료`;
+        document.getElementById('simProgressFill').style.width = `${pct}%`;
+        
+        // UI 업데이트를 위한 짧은 대기
+        if (i % 5 === 0) await new Promise(r => setTimeout(r, 10));
+      }
+      
+      // 결과 표시
+      displaySimulationResult(frequency);
+      
+      btn.disabled = false;
+      btn.textContent = '🚀 시뮬레이션 시작';
+    }
+    
+    function displaySimulationResult(frequency) {
+      // 빈도 그리드 표시
+      const grid = document.getElementById('simFreqGrid');
+      grid.innerHTML = '';
+      
+      const sorted = Object.entries(frequency).sort((a, b) => b[1] - a[1]);
+      const maxFreq = sorted[0][1];
+      const top6 = sorted.slice(0, 6).map(e => parseInt(e[0]));
+      const bonus = parseInt(sorted[6][0]);
+      
+      ALL_NUMBERS.forEach(n => {
+        const freq = frequency[n];
+        const ball = document.createElement('div');
+        ball.className = `freq-ball ${getBallColorClass(n)} ${top6.includes(n) ? 'top6' : ''}`;
+        ball.style.opacity = 0.3 + (freq / maxFreq) * 0.7;
+        ball.innerHTML = `<span class="num">${n}</span><span class="cnt">${freq}회</span>`;
+        grid.appendChild(ball);
+      });
+      
+      // 최종 번호 표시
+      const finalBalls = document.getElementById('simFinalBalls');
+      finalBalls.innerHTML = '';
+      
+      top6.sort((a, b) => a - b).forEach((n, i) => {
+        const ball = document.createElement('div');
+        ball.className = `ball gold delay-${i}`;
+        ball.textContent = n;
+        finalBalls.appendChild(ball);
+      });
+      
+      const plus = document.createElement('span');
+      plus.className = 'plus-sign';
+      plus.textContent = '+';
+      finalBalls.appendChild(plus);
+      
+      const bonusBall = document.createElement('div');
+      bonusBall.className = 'ball bonus delay-6';
+      bonusBall.textContent = bonus;
+      finalBalls.appendChild(bonusBall);
+      
+      document.getElementById('simFinalTitle').textContent = `${simCount}회 분석 종합 결과`;
+      document.getElementById('simResult').classList.remove('hidden');
+      
+      // 히스토리에 추가
+      const result = { numbers: top6.sort((a, b) => a - b), bonus };
+      updateHistory(result, `🏆 시뮬${simCount}회`);
+      generationCount++;
+      document.getElementById('genCount').textContent = generationCount;
+    }
+    
+    // ============================================
+    // 🎯 전략별 번호 생성 (UI용)
     // ============================================
     const strategies = {
-      // AI 신경망
       ai: async () => {
         if (!isModelTrained) {
           alert('먼저 AI 모델을 학습시켜 주세요!');
           return null;
         }
         await updateAIPredictions();
-        
+        const numbers = generateAINumbers();
         const probWithIndex = aiPredictions.map((p, i) => ({ num: i + 1, prob: p }));
         probWithIndex.sort((a, b) => b.prob - a.prob);
-        
-        const selected = [];
-        const candidates = probWithIndex.slice(0, 20);
-        
-        while (selected.length < 6) {
-          const num = weightedRandom(
-            candidates.map(c => c.num),
-            candidates.map(c => c.prob)
-          );
-          if (!selected.includes(num)) selected.push(num);
-        }
-        
-        selected.sort((a, b) => a - b);
-        const bonus = probWithIndex.find(p => !selected.includes(p.num)).num;
-        
-        return {
-          numbers: selected,
-          bonus,
-          info: { '분석 방식': 'TensorFlow.js 신경망', '학습 데이터': `${LOTTO_DATA.length}회차` }
-        };
+        const bonus = probWithIndex.find(p => !numbers.includes(p.num)).num;
+        return { numbers, bonus, info: { '분석 방식': 'TensorFlow.js 신경망', '학습 데이터': `${LOTTO_DATA.length}회차` } };
       },
-      
-      // 핫넘버
       hot: () => {
-        const hot = getHotNumbers(20);
-        const selected = shuffle(hot).slice(0, 6).sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        const freq = getRecentFrequency();
-        
-        return {
-          numbers: selected,
-          bonus,
-          info: { '분석 방식': `최근 ${RECENT_DRAWS}회 최다 출현`, '핫넘버 풀': hot.slice(0, 10).join(', ') }
-        };
+        const numbers = generateHotNumbers();
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': `최근 ${RECENT_DRAWS}회 최다 출현`, '핫넘버 풀': getHotNumbers(10).join(', ') } };
       },
-      
-      // 콜드넘버
       cold: () => {
-        const cold = getColdNumbers(20);
-        const selected = shuffle(cold).slice(0, 6).sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        
-        return {
-          numbers: selected,
-          bonus,
-          info: { '분석 방식': `최근 ${RECENT_DRAWS}회 미출현/저출현`, '콜드넘버 풀': cold.slice(0, 10).join(', ') }
-        };
+        const numbers = generateColdNumbers();
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': `최근 ${RECENT_DRAWS}회 미출현/저출현`, '콜드넘버 풀': getColdNumbers(10).join(', ') } };
       },
-      
-      // 밸런스
       balanced: () => {
-        const ranges = [[1,9], [10,18], [19,27], [28,36], [37,45]];
-        const selected = [];
-        
-        // 각 구간에서 1개씩
-        ranges.forEach(([min, max]) => {
-          const nums = ALL_NUMBERS.filter(n => n >= min && n <= max);
-          selected.push(shuffle(nums)[0]);
-        });
-        // 랜덤 1개 추가
-        const remaining = ALL_NUMBERS.filter(n => !selected.includes(n));
-        selected.push(shuffle(remaining)[0]);
-        
-        selected.sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        
-        return {
-          numbers: selected,
-          bonus,
-          info: { '분석 방식': '5구간 균등 배분', '구간': '1-9, 10-18, 19-27, 28-36, 37-45' }
-        };
+        const numbers = generateBalancedNumbers();
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': '5구간 균등 배분', '구간': '1-9, 10-18, 19-27, 28-36, 37-45' } };
       },
-      
-      // 누적통계
       frequency: () => {
-        const freq = getAllTimeFrequency();
-        const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
-        const top20 = sorted.slice(0, 20).map(e => parseInt(e[0]));
-        const selected = shuffle(top20).slice(0, 6).sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        
-        return {
-          numbers: selected,
-          bonus,
-          info: { '분석 방식': '역대 누적 최다 출현', '분석 회차': `${LOTTO_DATA.length}회` }
-        };
+        const numbers = generateFrequencyNumbers();
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': '역대 누적 최다 출현', '분석 회차': `${LOTTO_DATA.length}회` } };
       },
-      
-      // 연속패턴
       consecutive: () => {
         const start = Math.floor(Math.random() * 40) + 1;
         const consec = [start, start + 1];
         const remaining = shuffle(ALL_NUMBERS.filter(n => !consec.includes(n))).slice(0, 4);
-        const selected = [...consec, ...remaining].sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        
-        return {
-          numbers: selected,
-          bonus,
-          info: { '분석 방식': '연속번호 1쌍 포함', '연속번호': `${start}, ${start + 1}` }
-        };
+        const numbers = [...consec, ...remaining].sort((a, b) => a - b);
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': '연속번호 1쌍 포함', '연속번호': `${start}, ${start + 1}` } };
       },
-      
-      // 고저밸런스
-      lowHigh: () => {
-        const low = ALL_NUMBERS.filter(n => n <= 22);
-        const high = ALL_NUMBERS.filter(n => n >= 23);
-        const selected = [
-          ...shuffle(low).slice(0, 3),
-          ...shuffle(high).slice(0, 3)
-        ].sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        
-        return {
-          numbers: selected,
-          bonus,
-          info: { '분석 방식': '저번호 3개 + 고번호 3개', '기준': '1-22 / 23-45' }
-        };
-      },
-      
-      // 홀짝밸런스
       oddEven: () => {
         const odd = ALL_NUMBERS.filter(n => n % 2 === 1);
         const even = ALL_NUMBERS.filter(n => n % 2 === 0);
-        const selected = [
-          ...shuffle(odd).slice(0, 3),
-          ...shuffle(even).slice(0, 3)
-        ].sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        
-        return {
-          numbers: selected,
-          bonus,
-          info: { '분석 방식': '홀수 3개 + 짝수 3개', '홀짝비': '3:3' }
-        };
+        const numbers = [...shuffle(odd).slice(0, 3), ...shuffle(even).slice(0, 3)].sort((a, b) => a - b);
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': '홀수 3개 + 짝수 3개', '홀짝비': '3:3' } };
       },
-      
-      // 하이브리드
       hybrid: () => {
-        const hot = getHotNumbers(10);
-        const cold = getColdNumbers(10);
-        const freq = getAllTimeFrequency();
-        const topFreq = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 10).map(e => parseInt(e[0]));
-        
-        const selected = [];
-        selected.push(shuffle(hot)[0]); // 핫 1개
-        selected.push(shuffle(cold)[0]); // 콜드 1개
-        selected.push(shuffle(topFreq.filter(n => !selected.includes(n)))[0]); // 누적 1개
-        
-        // 밸런스 추가 (홀짝, 고저 고려)
-        while (selected.length < 6) {
-          const remaining = ALL_NUMBERS.filter(n => !selected.includes(n));
-          const oddCount = selected.filter(n => n % 2 === 1).length;
-          const lowCount = selected.filter(n => n <= 22).length;
-          
-          let pool = remaining;
-          if (oddCount < 2) pool = pool.filter(n => n % 2 === 1);
-          else if (oddCount > 3) pool = pool.filter(n => n % 2 === 0);
-          if (lowCount < 2) pool = pool.filter(n => n <= 22);
-          else if (lowCount > 3) pool = pool.filter(n => n > 22);
-          
-          if (pool.length === 0) pool = remaining;
-          selected.push(shuffle(pool)[0]);
-        }
-        
-        selected.sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        
-        return {
-          numbers: selected,
-          bonus,
-          info: { '분석 방식': '핫+콜드+누적+밸런스 복합', '구성': '핫1 + 콜드1 + 통계1 + 밸런스3' }
-        };
+        const numbers = generateHybridNumbers();
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': '핫+콜드+누적+밸런스 복합', '구성': '핫1 + 콜드1 + 통계1 + 랜덤3' } };
       }
     };
     
@@ -761,7 +847,6 @@
       const container = document.getElementById('ballsContainer');
       container.innerHTML = '';
       
-      // 6개 번호 표시
       result.numbers.forEach((n, i) => {
         const ball = document.createElement('div');
         ball.className = `ball ${getBallColorClass(n)} delay-${i}`;
@@ -769,19 +854,16 @@
         container.appendChild(ball);
       });
       
-      // + 기호
       const plus = document.createElement('span');
       plus.className = 'plus-sign';
       plus.textContent = '+';
       container.appendChild(plus);
       
-      // 보너스 볼
       const bonusBall = document.createElement('div');
-      bonusBall.className = `ball bonus delay-6`;
+      bonusBall.className = 'ball bonus delay-6';
       bonusBall.textContent = result.bonus;
       container.appendChild(bonusBall);
       
-      // 분석 정보
       const infoContainer = document.getElementById('analysisInfo');
       infoContainer.innerHTML = Object.entries(result.info || {}).map(([k, v]) => 
         `<div class="analysis-item"><span class="analysis-label">${k}</span><span class="analysis-value">${v}</span></div>`
@@ -821,22 +903,50 @@
       balanced: '⚖️ 밸런스',
       frequency: '📊 누적통계',
       consecutive: '🔗 연속패턴',
-      lowHigh: '📈 고저밸런스',
       oddEven: '🎲 홀짝밸런스',
       hybrid: '🔮 하이브리드'
     };
     
+    // 전략 버튼
     document.querySelectorAll('.strategy-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.strategy-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentStrategy = btn.dataset.strategy;
-        document.getElementById('aiStatus').classList.toggle('hidden', currentStrategy !== 'ai');
+        
+        // 시뮬레이션 섹션 표시/숨김
+        document.getElementById('simulationSection').classList.toggle('hidden', currentStrategy !== 'simulation');
+        document.getElementById('aiStatus').classList.toggle('hidden', currentStrategy !== 'ai' && currentStrategy !== 'simulation');
+        document.getElementById('generateSection').classList.toggle('hidden', currentStrategy === 'simulation');
       });
     });
     
+    // 시뮬레이션 횟수 버튼
+    document.querySelectorAll('.sim-count-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sim-count-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        simCount = parseInt(btn.dataset.count);
+        document.getElementById('customCount').value = '';
+      });
+    });
+    
+    // 시뮬레이션 커스텀 입력
+    document.getElementById('customCount').addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      if (val >= 5 && val <= 500) {
+        simCount = val;
+        document.querySelectorAll('.sim-count-btn').forEach(b => b.classList.remove('active'));
+      }
+    });
+    
+    // 시뮬레이션 실행
+    document.getElementById('simRunBtn').addEventListener('click', runSimulation);
+    
+    // AI 학습
     document.getElementById('trainBtn').addEventListener('click', trainModel);
     
+    // 번호 생성
     document.getElementById('generateBtn').addEventListener('click', async () => {
       const btn = document.getElementById('generateBtn');
       btn.disabled = true;
@@ -857,6 +967,7 @@
       }, 1000);
     });
     
+    // 통계 토글
     document.getElementById('toggleStats').addEventListener('click', () => {
       document.getElementById('statsContent').classList.toggle('show');
       document.getElementById('statsArrow').classList.toggle('open');
