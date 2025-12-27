@@ -117,6 +117,28 @@
     .collector-icon { width: 45px; height: 45px; background: linear-gradient(135deg, #ffd700, #ff8c00); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
     .collector-title { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; color: #ffd700; }
     .collector-sub { font-size: 0.75rem; color: #fbbf24; }
+    
+    /* 대량 생성 버튼 */
+    .bulk-generate { margin-bottom: 16px; }
+    .bulk-generate-label { font-size: 0.85rem; color: #fbbf24; margin-bottom: 10px; }
+    .bulk-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .bulk-btn { padding: 12px 20px; border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 12px; background: rgba(168, 85, 247, 0.15); color: #a855f7; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.3s; }
+    .bulk-btn:hover { background: rgba(168, 85, 247, 0.3); border-color: #a855f7; transform: translateY(-2px); }
+    .bulk-btn:disabled { background: #334155; border-color: #334155; color: #64748b; cursor: not-allowed; transform: none; }
+    .bulk-custom { display: flex; align-items: center; gap: 8px; }
+    .bulk-custom input { width: 80px; padding: 12px; border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 10px; background: rgba(0,0,0,0.3); color: #a855f7; font-weight: 700; font-size: 0.9rem; text-align: center; }
+    .bulk-custom input:focus { outline: none; border-color: #a855f7; }
+    .bulk-custom-btn { padding: 12px 16px; border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 10px; background: rgba(168, 85, 247, 0.15); color: #a855f7; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+    .bulk-custom-btn:hover { background: rgba(168, 85, 247, 0.3); border-color: #a855f7; }
+    .bulk-custom-btn:disabled { background: #334155; border-color: #334155; color: #64748b; cursor: not-allowed; }
+    
+    /* 생성 진행률 */
+    .bulk-progress { margin: 16px 0; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 10px; }
+    .bulk-progress.hidden { display: none; }
+    .bulk-progress-text { font-size: 0.85rem; color: #a855f7; margin-bottom: 8px; text-align: center; }
+    .bulk-progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+    .bulk-progress-fill { height: 100%; background: linear-gradient(90deg, #a855f7, #6366f1); border-radius: 4px; transition: width 0.1s; }
+    
     .collector-count { text-align: center; padding: 16px; background: rgba(0,0,0,0.3); border-radius: 12px; margin-bottom: 16px; }
     .collector-count-num { font-family: 'Orbitron', sans-serif; font-size: 2.5rem; color: #ffd700; }
     .collector-count-label { font-size: 0.8rem; color: #fbbf24; }
@@ -302,6 +324,25 @@
         </div>
       </div>
       
+      <!-- 🚀 대량 생성 버튼 -->
+      <div class="bulk-generate">
+        <div class="bulk-generate-label">⚡ 한 번에 대량 생성</div>
+        <div class="bulk-btns">
+          <button class="bulk-btn" data-count="10">10개</button>
+          <button class="bulk-btn" data-count="30">30개</button>
+          <button class="bulk-btn" data-count="50">50개</button>
+          <button class="bulk-btn" data-count="100">100개</button>
+          <div class="bulk-custom">
+            <input type="number" id="customBulkCount" placeholder="직접" min="1" max="500">
+            <button class="bulk-custom-btn" id="customBulkBtn">생성</button>
+          </div>
+        </div>
+        <div class="bulk-progress hidden" id="bulkProgress">
+          <div class="bulk-progress-text" id="bulkProgressText">0 / 100 생성 중...</div>
+          <div class="bulk-progress-bar"><div class="bulk-progress-fill" id="bulkProgressFill" style="width: 0%"></div></div>
+        </div>
+      </div>
+      
       <div class="collector-count">
         <div class="collector-count-num" id="collectedCount">0</div>
         <div class="collector-count-label">개의 번호 조합 수집됨</div>
@@ -371,9 +412,8 @@
     let currentStrategy = 'ai';
     let generationCount = 0;
     let history = [];
-    
-    // 🏆 AI 번호 수집용
     let collectedNumbers = [];
+    let isBulkGenerating = false;
     
     const ALL_NUMBERS = Array.from({ length: 45 }, (_, i) => i + 1);
     const WINDOW_SIZE = 10;
@@ -477,6 +517,26 @@
     }
     
     // ============================================
+    // 🧠 AI 번호 생성 (내부용)
+    // ============================================
+    function generateAINumbersInternal() {
+      if (!isModelTrained) return null;
+      
+      const probWithIndex = aiPredictions.map((p, i) => ({ num: i + 1, prob: p }));
+      probWithIndex.sort((a, b) => b.prob - a.prob);
+      
+      const selected = [];
+      const candidates = probWithIndex.slice(0, 20);
+      
+      while (selected.length < 6) {
+        const num = weightedRandom(candidates.map(c => c.num), candidates.map(c => c.prob));
+        if (!selected.includes(num)) selected.push(num);
+      }
+      
+      return selected.sort((a, b) => a - b);
+    }
+    
+    // ============================================
     // 🏆 AI 번호 수집 기능
     // ============================================
     function addToCollector(numbers) {
@@ -504,15 +564,65 @@
       }
     }
     
+    // 🚀 대량 생성
+    async function bulkGenerate(count) {
+      if (!isModelTrained) {
+        alert('먼저 AI 모델을 학습시켜 주세요!');
+        return;
+      }
+      
+      if (isBulkGenerating) return;
+      isBulkGenerating = true;
+      
+      // 버튼 비활성화
+      document.querySelectorAll('.bulk-btn, .bulk-custom-btn').forEach(btn => btn.disabled = true);
+      document.getElementById('generateBtn').disabled = true;
+      
+      // 진행률 표시
+      const progress = document.getElementById('bulkProgress');
+      const progressText = document.getElementById('bulkProgressText');
+      const progressFill = document.getElementById('bulkProgressFill');
+      progress.classList.remove('hidden');
+      
+      for (let i = 0; i < count; i++) {
+        await updateAIPredictions();
+        const numbers = generateAINumbersInternal();
+        if (numbers) {
+          addToCollector(numbers);
+          generationCount++;
+          document.getElementById('genCount').textContent = generationCount;
+        }
+        
+        // 진행률 업데이트
+        const pct = ((i + 1) / count * 100).toFixed(0);
+        progressText.textContent = `${i + 1} / ${count} 생성 중...`;
+        progressFill.style.width = `${pct}%`;
+        
+        // UI 업데이트를 위한 짧은 대기
+        if (i % 5 === 0) await new Promise(r => setTimeout(r, 10));
+      }
+      
+      progressText.textContent = `✅ ${count}개 생성 완료!`;
+      
+      // 버튼 활성화
+      document.querySelectorAll('.bulk-btn, .bulk-custom-btn').forEach(btn => btn.disabled = false);
+      document.getElementById('generateBtn').disabled = false;
+      isBulkGenerating = false;
+      
+      // 2초 후 진행률 숨기기
+      setTimeout(() => {
+        progress.classList.add('hidden');
+        progressFill.style.width = '0%';
+      }, 2000);
+    }
+    
     function analyzeCollectedNumbers() {
       if (collectedNumbers.length < 2) return;
       
-      // 빈도 계산
       const frequency = {};
       ALL_NUMBERS.forEach(n => frequency[n] = 0);
       collectedNumbers.forEach(nums => nums.forEach(n => frequency[n]++));
       
-      // 빈도 그리드 표시
       const grid = document.getElementById('freqGrid');
       grid.innerHTML = '';
       
@@ -530,7 +640,6 @@
         grid.appendChild(ball);
       });
       
-      // 최종 번호 표시
       const finalBalls = document.getElementById('finalBalls');
       finalBalls.innerHTML = '';
       
@@ -554,7 +663,6 @@
       document.getElementById('finalTitle').textContent = `${collectedNumbers.length}회 분석 종합 결과`;
       document.getElementById('finalAnalysis').classList.remove('hidden');
       
-      // 히스토리에 추가
       const result = { numbers: top6.sort((a, b) => a - b), bonus };
       updateHistory(result, `🏆 종합${collectedNumbers.length}회`);
     }
@@ -575,37 +683,26 @@
           return null;
         }
         await updateAIPredictions();
-        
+        const numbers = generateAINumbersInternal();
         const probWithIndex = aiPredictions.map((p, i) => ({ num: i + 1, prob: p }));
         probWithIndex.sort((a, b) => b.prob - a.prob);
+        const bonus = probWithIndex.find(p => !numbers.includes(p.num)).num;
         
-        const selected = [];
-        const candidates = probWithIndex.slice(0, 20);
+        addToCollector(numbers);
         
-        while (selected.length < 6) {
-          const num = weightedRandom(candidates.map(c => c.num), candidates.map(c => c.prob));
-          if (!selected.includes(num)) selected.push(num);
-        }
-        
-        selected.sort((a, b) => a - b);
-        const bonus = probWithIndex.find(p => !selected.includes(p.num)).num;
-        
-        // 🏆 AI 번호 수집
-        addToCollector(selected);
-        
-        return { numbers: selected, bonus, info: { '분석 방식': 'TensorFlow.js 신경망', '학습 데이터': `${LOTTO_DATA.length}회차`, '수집된 조합': `${collectedNumbers.length}개` } };
+        return { numbers, bonus, info: { '분석 방식': 'TensorFlow.js 신경망', '학습 데이터': `${LOTTO_DATA.length}회차`, '수집된 조합': `${collectedNumbers.length}개` } };
       },
       hot: () => {
         const hot = getHotNumbers(20);
-        const selected = shuffle(hot).slice(0, 6).sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        return { numbers: selected, bonus, info: { '분석 방식': `최근 ${RECENT_DRAWS}회 최다 출현`, '핫넘버 풀': getHotNumbers(10).join(', ') } };
+        const numbers = shuffle(hot).slice(0, 6).sort((a, b) => a - b);
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': `최근 ${RECENT_DRAWS}회 최다 출현`, '핫넘버 풀': getHotNumbers(10).join(', ') } };
       },
       cold: () => {
         const cold = getColdNumbers(20);
-        const selected = shuffle(cold).slice(0, 6).sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        return { numbers: selected, bonus, info: { '분석 방식': `최근 ${RECENT_DRAWS}회 미출현/저출현`, '콜드넘버 풀': getColdNumbers(10).join(', ') } };
+        const numbers = shuffle(cold).slice(0, 6).sort((a, b) => a - b);
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': `최근 ${RECENT_DRAWS}회 미출현/저출현`, '콜드넘버 풀': getColdNumbers(10).join(', ') } };
       },
       balanced: () => {
         const ranges = [[1,9], [10,18], [19,27], [28,36], [37,45]];
@@ -616,57 +713,55 @@
         });
         const remaining = ALL_NUMBERS.filter(n => !selected.includes(n));
         selected.push(shuffle(remaining)[0]);
-        selected.sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        return { numbers: selected, bonus, info: { '분석 방식': '5구간 균등 배분', '구간': '1-9, 10-18, 19-27, 28-36, 37-45' } };
+        const numbers = selected.sort((a, b) => a - b);
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': '5구간 균등 배분', '구간': '1-9, 10-18, 19-27, 28-36, 37-45' } };
       },
       frequency: () => {
         const freq = getAllTimeFrequency();
         const top20 = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 20).map(e => parseInt(e[0]));
-        const selected = shuffle(top20).slice(0, 6).sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        return { numbers: selected, bonus, info: { '분석 방식': '역대 누적 최다 출현', '분석 회차': `${LOTTO_DATA.length}회` } };
+        const numbers = shuffle(top20).slice(0, 6).sort((a, b) => a - b);
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': '역대 누적 최다 출현', '분석 회차': `${LOTTO_DATA.length}회` } };
       },
       consecutive: () => {
         const start = Math.floor(Math.random() * 40) + 1;
         const consec = [start, start + 1];
         const remaining = shuffle(ALL_NUMBERS.filter(n => !consec.includes(n))).slice(0, 4);
-        const selected = [...consec, ...remaining].sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        return { numbers: selected, bonus, info: { '분석 방식': '연속번호 1쌍 포함', '연속번호': `${start}, ${start + 1}` } };
+        const numbers = [...consec, ...remaining].sort((a, b) => a - b);
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': '연속번호 1쌍 포함', '연속번호': `${start}, ${start + 1}` } };
       },
       lowHigh: () => {
         const low = ALL_NUMBERS.filter(n => n <= 22);
         const high = ALL_NUMBERS.filter(n => n >= 23);
-        const selected = [...shuffle(low).slice(0, 3), ...shuffle(high).slice(0, 3)].sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        return { numbers: selected, bonus, info: { '분석 방식': '저번호 3개 + 고번호 3개', '기준': '1-22 / 23-45' } };
+        const numbers = [...shuffle(low).slice(0, 3), ...shuffle(high).slice(0, 3)].sort((a, b) => a - b);
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': '저번호 3개 + 고번호 3개', '기준': '1-22 / 23-45' } };
       },
       oddEven: () => {
         const odd = ALL_NUMBERS.filter(n => n % 2 === 1);
         const even = ALL_NUMBERS.filter(n => n % 2 === 0);
-        const selected = [...shuffle(odd).slice(0, 3), ...shuffle(even).slice(0, 3)].sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        return { numbers: selected, bonus, info: { '분석 방식': '홀수 3개 + 짝수 3개', '홀짝비': '3:3' } };
+        const numbers = [...shuffle(odd).slice(0, 3), ...shuffle(even).slice(0, 3)].sort((a, b) => a - b);
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': '홀수 3개 + 짝수 3개', '홀짝비': '3:3' } };
       },
       hybrid: () => {
         const hot = getHotNumbers(10);
         const cold = getColdNumbers(10);
         const freq = getAllTimeFrequency();
         const topFreq = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 10).map(e => parseInt(e[0]));
-        
         const selected = [];
         selected.push(shuffle(hot)[0]);
         selected.push(shuffle(cold)[0]);
         selected.push(shuffle(topFreq.filter(n => !selected.includes(n)))[0]);
-        
         while (selected.length < 6) {
           const remaining = ALL_NUMBERS.filter(n => !selected.includes(n));
           selected.push(shuffle(remaining)[0]);
         }
-        selected.sort((a, b) => a - b);
-        const bonus = shuffle(ALL_NUMBERS.filter(n => !selected.includes(n)))[0];
-        return { numbers: selected, bonus, info: { '분석 방식': '핫+콜드+누적+랜덤 복합', '구성': '핫1 + 콜드1 + 통계1 + 랜덤3' } };
+        const numbers = selected.sort((a, b) => a - b);
+        const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
+        return { numbers, bonus, info: { '분석 방식': '핫+콜드+누적+랜덤 복합', '구성': '핫1 + 콜드1 + 통계1 + 랜덤3' } };
       }
     };
     
@@ -877,6 +972,24 @@
         document.getElementById('aiStatus').classList.toggle('hidden', currentStrategy !== 'ai');
         document.getElementById('collectorSection').classList.toggle('hidden', currentStrategy !== 'ai');
       });
+    });
+    
+    // 대량 생성 버튼
+    document.querySelectorAll('.bulk-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const count = parseInt(btn.dataset.count);
+        bulkGenerate(count);
+      });
+    });
+    
+    // 커스텀 대량 생성
+    document.getElementById('customBulkBtn').addEventListener('click', () => {
+      const count = parseInt(document.getElementById('customBulkCount').value);
+      if (count >= 1 && count <= 500) {
+        bulkGenerate(count);
+      } else {
+        alert('1 ~ 500 사이의 숫자를 입력해주세요.');
+      }
     });
     
     // AI 학습
