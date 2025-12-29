@@ -25,6 +25,12 @@
     .badge.pro { background: linear-gradient(90deg, #a855f7, #6366f1); }
     h1 { font-family: 'Orbitron', sans-serif; font-size: clamp(2rem, 7vw, 3.5rem); font-weight: 900; background: linear-gradient(90deg, #00ff88, #00c8ff, #ff0080); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 10px 0; }
     .subtitle { color: #7dd3fc; font-size: 1rem; }
+    .quick-links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+    .quick-link-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 50px; font-weight: 700; font-size: 0.9rem; text-decoration: none; transition: all 0.3s; }
+    .quick-link-btn.dhlottery { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); color: white; }
+    .quick-link-btn.dhlottery:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4); }
+    .quick-link-btn.buy { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; }
+    .quick-link-btn.buy:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4); }
     .data-info { color: #64748b; font-size: 0.8rem; margin-top: 10px; }
     .data-info strong { color: #00ff88; }
     .card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 20px; padding: 20px; margin-bottom: 16px; }
@@ -222,6 +228,16 @@
       <p class="subtitle">다중 분석 번호 예측 시스템</p>
       <p class="data-info">📊 <strong id="totalRounds">1,203회차</strong> 학습 | 동행복권 실시간 연동</p>
     </header>
+    
+    <!-- 동행복권 바로가기 -->
+    <div class="quick-links">
+      <a href="https://www.dhlottery.co.kr/" target="_blank" class="quick-link-btn dhlottery">
+        🎰 동행복권 바로가기
+      </a>
+      <a href="https://el.dhlottery.co.kr/game/TotalGame.jsp?LottoId=LO40" target="_blank" class="quick-link-btn buy">
+        🛒 로또 구매하기
+      </a>
+    </div>
     
     <div class="latest-draw">
       <div class="latest-draw-title" id="latestTitle">🏆 최신 당첨번호</div>
@@ -428,17 +444,38 @@
       log(`내장 데이터: ${lastKnown}회차`, 'info');
       
       try {
-        log('📡 동행복권 API 연결...', 'api');
-        const res = await fetch(`/api/lotto?from=${lastKnown + 1}`);
-        const result = await res.json();
+        // 1. 최신 당첨번호 가져오기
+        log('📡 최신 당첨번호 조회...', 'api');
+        const latestRes = await fetch('/api/lotto?latest=true');
+        const latestResult = await latestRes.json();
         
-        if (result.success && result.data?.length > 0) {
-          result.data.forEach(item => {
-            LOTTO_DATA.push([item.round, item.numbers, item.bonus]);
-          });
-          log(`✅ ${result.data.length}개 새 회차 추가!`, 'api');
-        } else {
-          log('데이터 최신 상태', 'info');
+        if (latestResult.success && latestResult.data) {
+          const latest = latestResult.data;
+          // 최신 회차가 내장 데이터보다 새로운 경우 추가
+          if (latest.round > lastKnown) {
+            // 중간에 빠진 회차가 있으면 추가
+            for (let r = lastKnown + 1; r < latest.round; r++) {
+              try {
+                const midRes = await fetch(`/api/lotto?from=${r}`);
+                const midResult = await midRes.json();
+                if (midResult.success && midResult.data) {
+                  midResult.data.forEach(item => {
+                    if (!LOTTO_DATA.find(d => d[0] === item.round)) {
+                      LOTTO_DATA.push([item.round, item.numbers, item.bonus]);
+                    }
+                  });
+                }
+              } catch (e) {}
+            }
+            // 최신 회차 추가
+            if (!LOTTO_DATA.find(d => d[0] === latest.round)) {
+              LOTTO_DATA.push([latest.round, latest.numbers, latest.bonus]);
+              LOTTO_DATA.sort((a, b) => a[0] - b[0]);
+            }
+            log(`✅ 최신 ${latest.round}회차 로드 완료!`, 'api');
+          } else {
+            log('데이터 최신 상태', 'info');
+          }
         }
       } catch (e) {
         log('API 연결 실패 - 내장 데이터 사용', 'error');
