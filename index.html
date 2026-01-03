@@ -439,39 +439,49 @@
       log(`내장 데이터: ${lastKnown}회차`, 'info');
       
       try {
-        // 1. 최신 당첨번호 가져오기
         log('📡 최신 당첨번호 조회...', 'api');
-        const latestRes = await fetch('/api/lotto?latest=true');
-        const latestResult = await latestRes.json();
         
-        if (latestResult.success && latestResult.data) {
-          const latest = latestResult.data;
-          // 최신 회차가 내장 데이터보다 새로운 경우 추가
-          if (latest.round > lastKnown) {
-            // 중간에 빠진 회차가 있으면 추가
-            for (let r = lastKnown + 1; r < latest.round; r++) {
-              try {
-                const midRes = await fetch(`/api/lotto?from=${r}`);
-                const midResult = await midRes.json();
-                if (midResult.success && midResult.data) {
-                  midResult.data.forEach(item => {
-                    if (!LOTTO_DATA.find(d => d[0] === item.round)) {
-                      LOTTO_DATA.push([item.round, item.numbers, item.bonus]);
-                    }
-                  });
-                }
-              } catch (e) {}
+        // 최신 회차 계산
+        const startDate = new Date('2002-12-07');
+        const today = new Date();
+        const weeks = Math.floor((today - startDate) / (7 * 24 * 60 * 60 * 1000));
+        let checkRound = weeks + 1;
+        
+        // 최신 회차부터 확인 (최대 5회 시도)
+        for (let i = 0; i < 5; i++) {
+          const round = checkRound - i;
+          if (round <= lastKnown) break;
+          
+          try {
+            // CORS 프록시 사용
+            const proxyUrl = `https://corsproxy.io/?https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${round}`;
+            const response = await fetch(proxyUrl);
+            const data = await response.json();
+            
+            if (data.returnValue === 'success') {
+              const numbers = [
+                data.drwtNo1, data.drwtNo2, data.drwtNo3,
+                data.drwtNo4, data.drwtNo5, data.drwtNo6
+              ].sort((a, b) => a - b);
+              
+              // 새로운 회차면 추가
+              if (!LOTTO_DATA.find(d => d[0] === data.drwNo)) {
+                LOTTO_DATA.push([data.drwNo, numbers, data.bnusNo]);
+                LOTTO_DATA.sort((a, b) => a[0] - b[0]);
+                log(`✅ ${data.drwNo}회차 추가 완료!`, 'api');
+              }
             }
-            // 최신 회차 추가
-            if (!LOTTO_DATA.find(d => d[0] === latest.round)) {
-              LOTTO_DATA.push([latest.round, latest.numbers, latest.bonus]);
-              LOTTO_DATA.sort((a, b) => a[0] - b[0]);
-            }
-            log(`✅ 최신 ${latest.round}회차 로드 완료!`, 'api');
-          } else {
-            log('데이터 최신 상태', 'info');
+          } catch (e) {
+            // 개별 회차 실패는 무시
           }
         }
+        
+        if (LOTTO_DATA.length > lastKnown) {
+          log(`총 ${LOTTO_DATA.length - lastKnown}개 새 회차 로드!`, 'api');
+        } else {
+          log('데이터 최신 상태', 'info');
+        }
+        
       } catch (e) {
         log('API 연결 실패 - 내장 데이터 사용', 'error');
       }
