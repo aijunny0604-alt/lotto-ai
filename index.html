@@ -438,25 +438,74 @@
       const lastKnown = LOTTO_DATA[LOTTO_DATA.length - 1][0];
       log(`내장 데이터: ${lastKnown}회차`, 'info');
       
-      try {
-        log('📡 동행복권 API 연결...', 'api');
-        const res = await fetch(`/api/lotto?from=${lastKnown + 1}`);
-        const result = await res.json();
+      // 여러 CORS 프록시 시도
+      const proxies = [
+        (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        (url) => `https://proxy.cors.sh/${url}`,
+      ];
+      
+      const baseUrl = 'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=';
+      
+      // 최신 회차 계산
+      const startDate = new Date('2002-12-07');
+      const today = new Date();
+      const weeks = Math.floor((today - startDate) / (7 * 24 * 60 * 60 * 1000));
+      const estimatedLatest = weeks + 1;
+      
+      log(`📡 최신 회차 확인 중... (예상: ${estimatedLatest}회)`, 'api');
+      
+      let newCount = 0;
+      
+      // lastKnown+1 부터 estimatedLatest까지 확인
+      for (let round = lastKnown + 1; round <= estimatedLatest + 1; round++) {
+        let success = false;
         
-        if (result.success && result.data && result.data.length > 0) {
-          result.data.forEach(item => {
-            // 중복 체크
-            if (!LOTTO_DATA.find(d => d[0] === item.round)) {
-              LOTTO_DATA.push([item.round, item.numbers, item.bonus]);
+        for (const makeProxy of proxies) {
+          if (success) break;
+          
+          try {
+            const proxyUrl = makeProxy(baseUrl + round);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            const response = await fetch(proxyUrl, { 
+              signal: controller.signal,
+              headers: { 'Accept': 'application/json' }
+            });
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) continue;
+            
+            const data = await response.json();
+            
+            if (data.returnValue === 'success') {
+              const numbers = [
+                data.drwtNo1, data.drwtNo2, data.drwtNo3,
+                data.drwtNo4, data.drwtNo5, data.drwtNo6
+              ].sort((a, b) => a - b);
+              
+              if (!LOTTO_DATA.find(d => d[0] === data.drwNo)) {
+                LOTTO_DATA.push([data.drwNo, numbers, data.bnusNo]);
+                newCount++;
+                log(`✅ ${data.drwNo}회차 추가!`, 'api');
+              }
+              success = true;
             }
-          });
-          LOTTO_DATA.sort((a, b) => a[0] - b[0]);
-          log(`✅ ${result.data.length}개 새 회차 추가! (${result.data.map(d => d.round + '회').join(', ')})`, 'api');
-        } else {
-          log('데이터 최신 상태', 'info');
+          } catch (e) {
+            // 다음 프록시 시도
+            continue;
+          }
         }
-      } catch (e) {
-        log('API 연결 실패 - 내장 데이터 사용: ' + e.message, 'error');
+        
+        if (!success && round > lastKnown + 1) break;
+      }
+      
+      if (newCount > 0) {
+        LOTTO_DATA.sort((a, b) => a[0] - b[0]);
+        log(`🎉 총 ${newCount}개 새 회차 로드 완료!`, 'api');
+      } else {
+        log('데이터 최신 상태', 'info');
       }
       
       document.getElementById('totalRounds').textContent = `${LOTTO_DATA.length.toLocaleString()}회차`;
