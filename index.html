@@ -459,7 +459,9 @@
     const PROXY_SERVERS = [
       { name: 'AllOrigins', url: (target) => `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}` },
       { name: 'corsproxy.io', url: (target) => `https://corsproxy.io/?${encodeURIComponent(target)}` },
-      { name: 'cors-anywhere', url: (target) => `https://cors-proxy.htmldriven.com/?url=${encodeURIComponent(target)}` },
+      { name: 'codetabs', url: (target) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}` },
+      { name: 'thingproxy', url: (target) => `https://thingproxy.freeboard.io/fetch/${target}` },
+      { name: 'corsanywhere', url: (target) => `https://cors-anywhere.herokuapp.com/${target}` },
     ];
 
     async function fetchWithProxy(targetUrl, proxyIndex = 0) {
