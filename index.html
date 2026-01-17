@@ -678,20 +678,43 @@
     // ============================================
     // 🧠 AI 번호 생성 (내부용)
     // ============================================
+
+    // 과거 1등 당첨 조합인지 체크
+    function isPastWinningCombination(numbers) {
+      const sorted = [...numbers].sort((a, b) => a - b).join(',');
+      return LOTTO_DATA.some(d => d[1].join(',') === sorted);
+    }
+
     function generateAINumbersInternal() {
       if (!isModelTrained) return null;
-      
+
       const probWithIndex = aiPredictions.map((p, i) => ({ num: i + 1, prob: p }));
       probWithIndex.sort((a, b) => b.prob - a.prob);
-      
-      const selected = [];
       const candidates = probWithIndex.slice(0, 20);
-      
-      while (selected.length < 6) {
-        const num = weightedRandom(candidates.map(c => c.num), candidates.map(c => c.prob));
-        if (!selected.includes(num)) selected.push(num);
+
+      let attempts = 0;
+      const maxAttempts = 100; // 무한루프 방지
+
+      while (attempts < maxAttempts) {
+        const selected = [];
+
+        while (selected.length < 6) {
+          const num = weightedRandom(candidates.map(c => c.num), candidates.map(c => c.prob));
+          if (!selected.includes(num)) selected.push(num);
+        }
+
+        const sortedNumbers = selected.sort((a, b) => a - b);
+
+        // 과거 1등 당첨 조합이 아니면 반환
+        if (!isPastWinningCombination(sortedNumbers)) {
+          return sortedNumbers;
+        }
+
+        attempts++;
+        log(`⚠️ 과거 당첨 조합 감지, 재생성 중... (${attempts})`, 'info');
       }
-      
+
+      // 최대 시도 초과시 그냥 반환 (거의 발생 안함)
       return selected.sort((a, b) => a - b);
     }
     
@@ -853,55 +876,84 @@
       },
       hot: () => {
         const hot = getHotNumbers(20);
-        const numbers = shuffle(hot).slice(0, 6).sort((a, b) => a - b);
+        let numbers;
+        for (let i = 0; i < 100; i++) {
+          numbers = shuffle(hot).slice(0, 6).sort((a, b) => a - b);
+          if (!isPastWinningCombination(numbers)) break;
+        }
         const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
         return { numbers, bonus, info: { '분석 방식': `최근 ${RECENT_DRAWS}회 최다 출현`, '핫넘버 풀': getHotNumbers(10).join(', ') } };
       },
       cold: () => {
         const cold = getColdNumbers(20);
-        const numbers = shuffle(cold).slice(0, 6).sort((a, b) => a - b);
+        let numbers;
+        for (let i = 0; i < 100; i++) {
+          numbers = shuffle(cold).slice(0, 6).sort((a, b) => a - b);
+          if (!isPastWinningCombination(numbers)) break;
+        }
         const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
         return { numbers, bonus, info: { '분석 방식': `최근 ${RECENT_DRAWS}회 미출현/저출현`, '콜드넘버 풀': getColdNumbers(10).join(', ') } };
       },
       balanced: () => {
         const ranges = [[1,9], [10,18], [19,27], [28,36], [37,45]];
-        const selected = [];
-        ranges.forEach(([min, max]) => {
-          const nums = ALL_NUMBERS.filter(n => n >= min && n <= max);
-          selected.push(shuffle(nums)[0]);
-        });
-        const remaining = ALL_NUMBERS.filter(n => !selected.includes(n));
-        selected.push(shuffle(remaining)[0]);
-        const numbers = selected.sort((a, b) => a - b);
+        let numbers;
+        for (let i = 0; i < 100; i++) {
+          const selected = [];
+          ranges.forEach(([min, max]) => {
+            const nums = ALL_NUMBERS.filter(n => n >= min && n <= max);
+            selected.push(shuffle(nums)[0]);
+          });
+          const remaining = ALL_NUMBERS.filter(n => !selected.includes(n));
+          selected.push(shuffle(remaining)[0]);
+          numbers = selected.sort((a, b) => a - b);
+          if (!isPastWinningCombination(numbers)) break;
+        }
         const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
         return { numbers, bonus, info: { '분석 방식': '5구간 균등 배분', '구간': '1-9, 10-18, 19-27, 28-36, 37-45' } };
       },
       frequency: () => {
         const freq = getAllTimeFrequency();
         const top20 = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 20).map(e => parseInt(e[0]));
-        const numbers = shuffle(top20).slice(0, 6).sort((a, b) => a - b);
+        let numbers;
+        for (let i = 0; i < 100; i++) {
+          numbers = shuffle(top20).slice(0, 6).sort((a, b) => a - b);
+          if (!isPastWinningCombination(numbers)) break;
+        }
         const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
         return { numbers, bonus, info: { '분석 방식': '역대 누적 최다 출현', '분석 회차': `${LOTTO_DATA.length}회` } };
       },
       consecutive: () => {
-        const start = Math.floor(Math.random() * 40) + 1;
-        const consec = [start, start + 1];
-        const remaining = shuffle(ALL_NUMBERS.filter(n => !consec.includes(n))).slice(0, 4);
-        const numbers = [...consec, ...remaining].sort((a, b) => a - b);
+        let numbers;
+        let start;
+        for (let i = 0; i < 100; i++) {
+          start = Math.floor(Math.random() * 40) + 1;
+          const consec = [start, start + 1];
+          const remaining = shuffle(ALL_NUMBERS.filter(n => !consec.includes(n))).slice(0, 4);
+          numbers = [...consec, ...remaining].sort((a, b) => a - b);
+          if (!isPastWinningCombination(numbers)) break;
+        }
         const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
         return { numbers, bonus, info: { '분석 방식': '연속번호 1쌍 포함', '연속번호': `${start}, ${start + 1}` } };
       },
       lowHigh: () => {
         const low = ALL_NUMBERS.filter(n => n <= 22);
         const high = ALL_NUMBERS.filter(n => n >= 23);
-        const numbers = [...shuffle(low).slice(0, 3), ...shuffle(high).slice(0, 3)].sort((a, b) => a - b);
+        let numbers;
+        for (let i = 0; i < 100; i++) {
+          numbers = [...shuffle(low).slice(0, 3), ...shuffle(high).slice(0, 3)].sort((a, b) => a - b);
+          if (!isPastWinningCombination(numbers)) break;
+        }
         const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
         return { numbers, bonus, info: { '분석 방식': '저번호 3개 + 고번호 3개', '기준': '1-22 / 23-45' } };
       },
       oddEven: () => {
         const odd = ALL_NUMBERS.filter(n => n % 2 === 1);
         const even = ALL_NUMBERS.filter(n => n % 2 === 0);
-        const numbers = [...shuffle(odd).slice(0, 3), ...shuffle(even).slice(0, 3)].sort((a, b) => a - b);
+        let numbers;
+        for (let i = 0; i < 100; i++) {
+          numbers = [...shuffle(odd).slice(0, 3), ...shuffle(even).slice(0, 3)].sort((a, b) => a - b);
+          if (!isPastWinningCombination(numbers)) break;
+        }
         const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
         return { numbers, bonus, info: { '분석 방식': '홀수 3개 + 짝수 3개', '홀짝비': '3:3' } };
       },
@@ -910,15 +962,19 @@
         const cold = getColdNumbers(10);
         const freq = getAllTimeFrequency();
         const topFreq = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 10).map(e => parseInt(e[0]));
-        const selected = [];
-        selected.push(shuffle(hot)[0]);
-        selected.push(shuffle(cold)[0]);
-        selected.push(shuffle(topFreq.filter(n => !selected.includes(n)))[0]);
-        while (selected.length < 6) {
-          const remaining = ALL_NUMBERS.filter(n => !selected.includes(n));
-          selected.push(shuffle(remaining)[0]);
+        let numbers;
+        for (let i = 0; i < 100; i++) {
+          const selected = [];
+          selected.push(shuffle(hot)[0]);
+          selected.push(shuffle(cold)[0]);
+          selected.push(shuffle(topFreq.filter(n => !selected.includes(n)))[0]);
+          while (selected.length < 6) {
+            const remaining = ALL_NUMBERS.filter(n => !selected.includes(n));
+            selected.push(shuffle(remaining)[0]);
+          }
+          numbers = selected.sort((a, b) => a - b);
+          if (!isPastWinningCombination(numbers)) break;
         }
-        const numbers = selected.sort((a, b) => a - b);
         const bonus = shuffle(ALL_NUMBERS.filter(n => !numbers.includes(n)))[0];
         return { numbers, bonus, info: { '분석 방식': '핫+콜드+누적+랜덤 복합', '구성': '핫1 + 콜드1 + 통계1 + 랜덤3' } };
       }
