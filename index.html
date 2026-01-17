@@ -453,20 +453,57 @@
     // 📡 API 데이터 로드 (실시간 동행복권 연동)
     // ============================================
     let isLoadingAPI = false;
+    let currentProxyIndex = 0;
+
+    // 프록시 서버 목록 (하나 실패하면 다음 것 시도)
+    const PROXY_SERVERS = [
+      { name: 'AllOrigins', url: (target) => `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}` },
+      { name: 'corsproxy.io', url: (target) => `https://corsproxy.io/?${encodeURIComponent(target)}` },
+      { name: 'cors-anywhere', url: (target) => `https://cors-proxy.htmldriven.com/?url=${encodeURIComponent(target)}` },
+    ];
+
+    async function fetchWithProxy(targetUrl, proxyIndex = 0) {
+      if (proxyIndex >= PROXY_SERVERS.length) {
+        throw new Error('모든 프록시 서버 실패');
+      }
+
+      const proxy = PROXY_SERVERS[proxyIndex];
+      const proxyUrl = proxy.url(targetUrl);
+
+      try {
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(proxyUrl, { signal: controller.signal });
+
+        if (!response.ok) throw new Error('응답 실패');
+
+        const data = await response.json();
+
+        // 성공한 프록시 기억
+        currentProxyIndex = proxyIndex;
+        return data;
+      } catch (e) {
+        // 다음 프록시로 시도
+        log(`⚠️ ${proxy.name} 실패, 다음 프록시 시도...`, 'info');
+        return fetchWithProxy(targetUrl, proxyIndex + 1);
+      }
+    }
 
     async function fetchSingleRound(round) {
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=' + round)}`;
-      const controller = new AbortController();
-      setTimeout(() => controller.abort(), 5000);
+      const targetUrl = `https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${round}`;
 
-      const response = await fetch(proxyUrl, { signal: controller.signal });
-      const data = await response.json();
+      try {
+        const data = await fetchWithProxy(targetUrl, currentProxyIndex);
 
-      if (data.returnValue === 'success') {
-        const numbers = [data.drwtNo1, data.drwtNo2, data.drwtNo3, data.drwtNo4, data.drwtNo5, data.drwtNo6].sort((a, b) => a - b);
-        return { round: data.drwNo, numbers, bonus: data.bnusNo };
+        if (data.returnValue === 'success') {
+          const numbers = [data.drwtNo1, data.drwtNo2, data.drwtNo3, data.drwtNo4, data.drwtNo5, data.drwtNo6].sort((a, b) => a - b);
+          return { round: data.drwNo, numbers, bonus: data.bnusNo };
+        }
+        return null;
+      } catch (e) {
+        return null;
       }
-      return null;
     }
 
     async function fetchLatestData() {
@@ -507,8 +544,9 @@
         }
 
         if (addedCount > 0) {
-          updateAPIStatus('success', `🎉 ${addedCount}개 회차 실시간 업데이트 완료! (총 ${LOTTO_DATA.length}회차)`);
-          log(`🎉 실시간 업데이트: ${addedCount}개 회차 추가됨!`, 'api');
+          const usedProxy = PROXY_SERVERS[currentProxyIndex].name;
+          updateAPIStatus('success', `🎉 ${addedCount}개 회차 업데이트 완료! (${usedProxy} 사용)`);
+          log(`🎉 실시간 업데이트: ${addedCount}개 회차 추가됨! [프록시: ${usedProxy}]`, 'api');
 
           // 새 데이터가 추가되면 자동으로 AI 학습 시작
           setTimeout(() => {
