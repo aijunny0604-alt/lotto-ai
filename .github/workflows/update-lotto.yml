@@ -1,0 +1,127 @@
+name: Update Lotto Data
+
+on:
+  schedule:
+    # 매주 토요일 밤 10시 (한국시간) = UTC 13:00
+    - cron: '0 13 * * 6'
+  workflow_dispatch: # 수동 실행 가능
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch latest lotto data and update
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+          const https = require('https');
+
+          // 동행복권 API에서 데이터 가져오기
+          function fetchLottoData(round) {
+            return new Promise((resolve, reject) => {
+              const url = `https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${round}`;
+              https.get(url, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                  try {
+                    resolve(JSON.parse(data));
+                  } catch (e) {
+                    reject(e);
+                  }
+                });
+              }).on('error', reject);
+            });
+          }
+
+          async function main() {
+            // index.html 읽기
+            let html = fs.readFileSync('index.html', 'utf8');
+
+            // 현재 내장된 마지막 회차 찾기
+            const match = html.match(/\[(\d+),\[\d+,\d+,\d+,\d+,\d+,\d+\],\d+\]\];/);
+            if (!match) {
+              console.log('Cannot find LOTTO_DATA in index.html');
+              process.exit(0);
+            }
+
+            let lastRound = parseInt(match[1]);
+            console.log(`Current last round: ${lastRound}`);
+
+            let newData = [];
+            let currentRound = lastRound + 1;
+
+            // 새 회차 데이터 가져오기
+            while (true) {
+              try {
+                const data = await fetchLottoData(currentRound);
+
+                if (data.returnValue !== 'success') {
+                  console.log(`Round ${currentRound} not available yet`);
+                  break;
+                }
+
+                const numbers = [
+                  data.drwtNo1, data.drwtNo2, data.drwtNo3,
+                  data.drwtNo4, data.drwtNo5, data.drwtNo6
+                ].sort((a, b) => a - b);
+
+                const entry = `[${data.drwNo},[${numbers.join(',')}],${data.bnusNo}]`;
+                newData.push(entry);
+
+                console.log(`Added round ${currentRound}: [${numbers.join(', ')}] + ${data.bnusNo}`);
+                currentRound++;
+
+                // API 부하 방지
+                await new Promise(r => setTimeout(r, 500));
+              } catch (e) {
+                console.log(`Error fetching round ${currentRound}: ${e.message}`);
+                break;
+              }
+            }
+
+            if (newData.length === 0) {
+              console.log('No new data to add');
+              process.exit(0);
+            }
+
+            // index.html 업데이트
+            const insertPoint = html.lastIndexOf(']];');
+            const newHtml = html.slice(0, insertPoint) + ',' + newData.join(',') + html.slice(insertPoint);
+
+            fs.writeFileSync('index.html', newHtml);
+            console.log(`Successfully added ${newData.length} new round(s)`);
+          }
+
+          main().catch(e => {
+            console.error(e);
+            process.exit(1);
+          });
+          EOF
+
+      - name: Check for changes
+        id: check
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Auto-update: Add latest lotto data $(date +'%Y-%m-%d')"
+          git push
