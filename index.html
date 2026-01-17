@@ -29,8 +29,21 @@
     .quick-link-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 50px; font-weight: 700; font-size: 0.9rem; text-decoration: none; transition: all 0.3s; }
     .quick-link-btn.dhlottery { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); color: white; }
     .quick-link-btn.dhlottery:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4); }
+    .quick-link-btn.refresh-btn { background: linear-gradient(135deg, #a855f7, #6366f1); color: white; border: none; cursor: pointer; }
+    .quick-link-btn.refresh-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(168, 85, 247, 0.4); }
+    .quick-link-btn.refresh-btn:disabled { background: #475569; cursor: not-allowed; transform: none; box-shadow: none; }
     .data-info { color: #64748b; font-size: 0.8rem; margin-top: 6px; }
     .data-info strong { color: #00ff88; }
+
+    /* API 상태 표시 */
+    .api-status { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; padding: 10px 16px; border-radius: 10px; font-size: 0.85rem; }
+    .api-status.loading { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); color: #a855f7; }
+    .api-status.success { background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); color: #00ff88; }
+    .api-status.error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; }
+    .api-status-icon { font-size: 1rem; }
+    .api-status-text { font-weight: 500; }
+    .api-spinner { width: 14px; height: 14px; border: 2px solid rgba(168, 85, 247, 0.3); border-top-color: #a855f7; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 20px; padding: 20px; margin-bottom: 16px; }
     .card-title { font-weight: 700; font-size: 1rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; color: #00ff88; }
     .latest-draw { background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 200, 255, 0.1)); border: 1px solid rgba(0, 255, 136, 0.3); padding: 12px; border-radius: 16px; margin-bottom: 12px; text-align: center; }
@@ -225,13 +238,17 @@
       <h1>LOTTO AI PRO</h1>
       <p class="subtitle">다중 분석 번호 예측 시스템</p>
       <p class="data-info">📊 <strong id="totalRounds">1,203회차</strong> 학습 | 동행복권 실시간 연동</p>
+      <div id="apiStatus" class="api-status" style="display: none;"></div>
     </header>
-    
+
     <!-- 동행복권 바로가기 -->
     <div class="quick-links">
       <a href="https://www.dhlottery.co.kr/" target="_blank" class="quick-link-btn dhlottery">
         🎰 동행복권 바로가기
       </a>
+      <button id="refreshDataBtn" class="quick-link-btn refresh-btn" onclick="refreshLottoData()">
+        🔄 실시간 데이터 갱신
+      </button>
     </div>
     
     <div class="latest-draw">
@@ -433,35 +450,115 @@
     const RECENT_DRAWS = 50;
     
     // ============================================
-    // 📡 API 데이터 로드
+    // 📡 API 데이터 로드 (실시간 동행복권 연동)
     // ============================================
+    let isLoadingAPI = false;
+
+    async function fetchSingleRound(round) {
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=' + round)}`;
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(proxyUrl, { signal: controller.signal });
+      const data = await response.json();
+
+      if (data.returnValue === 'success') {
+        const numbers = [data.drwtNo1, data.drwtNo2, data.drwtNo3, data.drwtNo4, data.drwtNo5, data.drwtNo6].sort((a, b) => a - b);
+        return { round: data.drwNo, numbers, bonus: data.bnusNo };
+      }
+      return null;
+    }
+
     async function fetchLatestData() {
       const lastKnown = LOTTO_DATA[LOTTO_DATA.length - 1][0];
-      log(`내장 데이터: ${lastKnown}회차`, 'info');
-      
-      // API 시도 (안되면 내장 데이터 사용)
+      log(`📊 내장 데이터: ${lastKnown}회차`, 'info');
+
+      if (isLoadingAPI) return;
+      isLoadingAPI = true;
+
+      updateAPIStatus('loading', `실시간 데이터 확인 중...`);
+
+      let addedCount = 0;
+      let currentRound = lastKnown + 1;
+
       try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=' + (lastKnown + 1))}`;
-        const controller = new AbortController();
-        setTimeout(() => controller.abort(), 3000);
-        
-        const response = await fetch(proxyUrl, { signal: controller.signal });
-        const data = await response.json();
-        
-        if (data.returnValue === 'success') {
-          const numbers = [data.drwtNo1, data.drwtNo2, data.drwtNo3, data.drwtNo4, data.drwtNo5, data.drwtNo6].sort((a, b) => a - b);
-          if (!LOTTO_DATA.find(d => d[0] === data.drwNo)) {
-            LOTTO_DATA.push([data.drwNo, numbers, data.bnusNo]);
-            log(`✅ ${data.drwNo}회차 추가!`, 'api');
+        // 최신 회차까지 계속 가져오기
+        while (true) {
+          try {
+            const result = await fetchSingleRound(currentRound);
+
+            if (result && !LOTTO_DATA.find(d => d[0] === result.round)) {
+              LOTTO_DATA.push([result.round, result.numbers, result.bonus]);
+              addedCount++;
+              log(`✅ ${result.round}회차 추가! [${result.numbers.join(', ')}] + ${result.bonus}`, 'api');
+              updateAPIStatus('loading', `${result.round}회차 로드 완료 (${addedCount}개 추가)`);
+              currentRound++;
+
+              // 약간의 딜레이로 API 부하 방지
+              await new Promise(r => setTimeout(r, 100));
+            } else {
+              // 더 이상 새 데이터 없음
+              break;
+            }
+          } catch (e) {
+            // 해당 회차 없음 또는 에러 - 종료
+            break;
           }
         }
+
+        if (addedCount > 0) {
+          updateAPIStatus('success', `🎉 ${addedCount}개 회차 실시간 업데이트 완료! (총 ${LOTTO_DATA.length}회차)`);
+          log(`🎉 실시간 업데이트: ${addedCount}개 회차 추가됨!`, 'api');
+
+          // 새 데이터가 추가되면 자동으로 AI 학습 시작
+          setTimeout(() => {
+            if (!isModelTrained) {
+              log('📚 새 데이터로 AI 자동 학습을 시작합니다...', 'ai');
+              trainModel();
+            }
+          }, 1000);
+        } else {
+          updateAPIStatus('success', `✅ 최신 데이터입니다 (${LOTTO_DATA.length}회차)`);
+          log('✅ 이미 최신 데이터입니다', 'info');
+        }
+
       } catch (e) {
-        log('API 생략 - 내장 데이터 사용', 'info');
+        updateAPIStatus('error', `API 연결 실패 - 내장 데이터 사용 (${LOTTO_DATA.length}회차)`);
+        log('⚠️ API 연결 실패 - 내장 데이터 사용', 'info');
       }
-      
+
+      isLoadingAPI = false;
       document.getElementById('totalRounds').textContent = `${LOTTO_DATA.length.toLocaleString()}회차`;
       displayLatestDraw();
       updateStatsGrid();
+    }
+
+    function updateAPIStatus(status, message) {
+      const statusEl = document.getElementById('apiStatus');
+      if (!statusEl) return;
+
+      statusEl.className = `api-status ${status}`;
+      statusEl.innerHTML = `
+        <span class="api-status-icon">${status === 'loading' ? '🔄' : status === 'success' ? '✅' : '⚠️'}</span>
+        <span class="api-status-text">${message}</span>
+        ${status === 'loading' ? '<span class="api-spinner"></span>' : ''}
+      `;
+      statusEl.style.display = 'flex';
+    }
+
+    async function refreshLottoData() {
+      const btn = document.getElementById('refreshDataBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '🔄 갱신 중...';
+      }
+
+      await fetchLatestData();
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '🔄 실시간 데이터 갱신';
+      }
     }
     
     // ============================================
