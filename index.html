@@ -36,13 +36,13 @@
     .data-info strong { color: #00ff88; }
 
     /* API 상태 표시 */
-    .api-status { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; padding: 10px 16px; border-radius: 10px; font-size: 0.85rem; }
-    .api-status.loading { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); color: #a855f7; }
-    .api-status.success { background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); color: #00ff88; }
-    .api-status.error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; }
-    .api-status-icon { font-size: 1rem; }
-    .api-status-text { font-weight: 500; }
-    .api-spinner { width: 14px; height: 14px; border: 2px solid rgba(168, 85, 247, 0.3); border-top-color: #a855f7; border-radius: 50%; animation: spin 1s linear infinite; }
+    .api-status { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 6px 0; font-size: 0.75rem; letter-spacing: 0.3px; }
+    .api-status.loading { color: #a855f7; }
+    .api-status.success { color: rgba(0, 255, 136, 0.8); }
+    .api-status.error { color: rgba(239, 68, 68, 0.8); }
+    .api-status-icon { font-size: 0.75rem; }
+    .api-status-text { font-weight: 400; }
+    .api-spinner { width: 10px; height: 10px; border: 1.5px solid rgba(168, 85, 247, 0.3); border-top-color: #a855f7; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 20px; padding: 20px; margin-bottom: 16px; }
     .card-title { font-weight: 700; font-size: 1rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; color: #00ff88; }
