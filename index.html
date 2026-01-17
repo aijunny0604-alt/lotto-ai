@@ -237,7 +237,7 @@
       </div>
       <h1>LOTTO AI PRO</h1>
       <p class="subtitle">다중 분석 번호 예측 시스템</p>
-      <p class="data-info">📊 <strong id="totalRounds">1,203회차</strong> 학습 | 동행복권 실시간 연동</p>
+      <p class="data-info">📊 <strong id="totalRounds">로딩중...</strong> 학습 완료 | 최신: <strong id="latestRound">-</strong>회차</p>
       <div id="apiStatus" class="api-status" style="display: none;"></div>
     </header>
 
@@ -528,9 +528,18 @@
       }
 
       isLoadingAPI = false;
-      document.getElementById('totalRounds').textContent = `${LOTTO_DATA.length.toLocaleString()}회차`;
+      updateDataInfo();
       displayLatestDraw();
       updateStatsGrid();
+    }
+
+    function updateDataInfo() {
+      const totalEl = document.getElementById('totalRounds');
+      const latestEl = document.getElementById('latestRound');
+      const latestRound = LOTTO_DATA[LOTTO_DATA.length - 1][0];
+
+      if (totalEl) totalEl.textContent = `${LOTTO_DATA.length.toLocaleString()}회차`;
+      if (latestEl) latestEl.textContent = latestRound.toLocaleString();
     }
 
     function updateAPIStatus(status, message) {
@@ -1143,6 +1152,7 @@
     // ============================================
     // 🚀 초기화
     // ============================================
+    updateDataInfo();
     displayLatestDraw();
     updateStatsGrid();
     fetchLatestData();
